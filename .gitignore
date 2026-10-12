@@ -1,0 +1,6 @@
+# helyi beállítások (nem kerül a nyilvános tárolóba)
+.claude/
+*.json.bak
+
+# a claude.ai-os prototípus (a GitHub-os változat az index.html)
+kettesben.html

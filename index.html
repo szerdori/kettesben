@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Kettesben</title>
+<meta name="description" content="Randiötletek kettőnknek: az időnk, a helyünk és az ízlésünk alapján.">
+<meta name="theme-color" content="#D93A63">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Kettesben">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one-screen phone app — context bar on top, swipeable card stack in the middle, tab bar at the bottom. */
+:root{
+  --bg:#ECEEF6; --surface:#FFFFFF; --surface-2:#F5F6FB; --ink:#1D2040; --muted:#62668A; --line:#D6D9E8;
+  --like:#D93A63; --like-ink:#FFFFFF; --nope:#4F5878; --amber:#E39327; --amber-soft:#FCEBD2; --ok:#2E8A5B;
+  --card-s:72%; --card-l:90%; --big-l:42%; --kick-l:34%;
+  --shadow:0 10px 30px rgba(29,32,64,.12),0 2px 6px rgba(29,32,64,.06);
+  --font-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --font-body:"Figtree",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11132A; --surface:#1B1E3C; --surface-2:#22264A; --ink:#ECEDF8; --muted:#A3A7C8; --line:#2F3460;
+  --like:#F0597D; --like-ink:#1A0A10; --nope:#9AA2C4; --amber:#F2A845; --amber-soft:#3A2B17; --ok:#5CC48D;
+  --card-s:32%; --card-l:21%; --big-l:68%; --kick-l:78%;
+  --shadow:0 10px 30px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.3); color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#11132A; --surface:#1B1E3C; --surface-2:#22264A; --ink:#ECEDF8; --muted:#A3A7C8; --line:#2F3460;
+  --like:#F0597D; --like-ink:#1A0A10; --nope:#9AA2C4; --amber:#F2A845; --amber-soft:#3A2B17; --ok:#5CC48D;
+  --card-s:32%; --card-l:21%; --big-l:68%; --kick-l:78%;
+  --shadow:0 10px 30px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.3); color-scheme:dark;
+}
+html,body{height:100%;margin:0}
+html{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);background:var(--bg);-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.45;overscroll-behavior:none}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.app{height:100%;display:grid;grid-template-rows:auto 1fr auto;max-width:520px;margin:0 auto}
+
+/* header */
+.top{display:flex;flex-direction:column;gap:10px;padding:14px 16px 8px}
+.brand-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.brand{font-family:var(--font-display);font-weight:800;font-size:26px;letter-spacing:-.02em}
+.brand span{color:var(--like)}
+.sync{font-size:12px;color:var(--muted);white-space:nowrap}
+.ctx-btn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:10px 14px}
+.ctx-btn .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.ctx-btn .sum{font-weight:600;font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ctx-btn .txt{flex:1;min-width:0;display:flex;flex-direction:column}
+.ctx-btn svg{flex:none;color:var(--muted)}
+
+main{min-height:0;position:relative}
+.view{height:100%;display:flex;flex-direction:column;padding:0 16px}
+.view.scroll{overflow-y:auto;padding-block:4px 24px}
+
+/* novelty switch */
+.novel{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 2px 12px}
+.novel-txt{display:flex;flex-direction:column}
+.novel-txt b{font-size:14px}
+.novel-txt small{color:var(--muted);font-size:12px}
+.switch{position:relative;width:52px;height:30px;flex:none}
+.switch input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer;z-index:1}
+.switch .track{position:absolute;inset:0;border-radius:99px;background:var(--line);transition:background .2s}
+.switch .knob{position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}
+.switch input:checked + .track{background:var(--amber)}
+.switch input:checked + .track .knob{transform:translateX(22px)}
+.switch input:focus-visible + .track{outline:3px solid var(--amber);outline-offset:2px}
+
+/* deck */
+.deck{position:relative;flex:1;min-height:0}
+.card{position:absolute;inset:0;border-radius:28px;background:hsl(var(--h) var(--card-s) var(--card-l));box-shadow:var(--shadow);padding:20px 20px 18px;display:flex;flex-direction:column;gap:10px;touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden;transition:transform .3s ease}
+.card.back1{transform:translateY(12px) scale(.955);pointer-events:none}
+.card.back2{transform:translateY(24px) scale(.91);pointer-events:none}
+.card.back1 > *,.card.back2 > *{opacity:.0}
+.deck.novel-on .card.top{box-shadow:var(--shadow),0 0 0 3px var(--amber)}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:4px 9px;border-radius:99px;background:color-mix(in srgb,var(--surface) 60%,transparent);color:hsl(var(--h) 45% var(--kick-l))}
+.pill.new{background:var(--amber);color:#2A1A05}
+.cost{font-weight:700;font-size:13px;color:hsl(var(--h) 45% var(--kick-l));white-space:nowrap;font-variant-numeric:tabular-nums}
+.cost .off{opacity:.3}
+.big{font-family:var(--font-display);font-weight:800;line-height:.85;letter-spacing:-.05em;color:hsl(var(--h) 50% var(--big-l));font-size:clamp(56px,13vh,124px);margin-top:auto;display:flex;align-items:baseline;gap:8px;font-variant-numeric:tabular-nums}
+.big small{font-size:.24em;letter-spacing:0;font-weight:700}
+.card h2{font-family:var(--font-display);font-weight:700;font-size:clamp(22px,3.4vh,28px);line-height:1.1;letter-spacing:-.015em;margin:0;text-wrap:balance}
+.card p{margin:0;color:var(--ink);opacity:.85;font-size:15px}
+.meta{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted);font-weight:500}
+.meta span{display:inline-flex;align-items:center;gap:5px}
+.why{display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid color-mix(in srgb,var(--ink) 12%,transparent);padding-top:10px;font-size:13px;font-weight:600}
+.why a{color:inherit;font-weight:600;white-space:nowrap}
+.stamp{position:absolute;top:26px;padding:6px 12px;border:3px solid;border-radius:10px;font-family:var(--font-display);font-weight:800;font-size:22px;letter-spacing:.06em;opacity:0;pointer-events:none}
+.stamp.yes{left:20px;color:var(--like);transform:rotate(-12deg)}
+.stamp.no{right:20px;color:var(--nope);transform:rotate(12deg)}
+
+.empty{position:absolute;inset:0;border:2px dashed var(--line);border-radius:28px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px;padding:24px}
+.empty h3{font-family:var(--font-display);font-size:22px;margin:0}
+.empty p{margin:0;color:var(--muted);max-width:30ch}
+
+.actions{display:flex;align-items:center;justify-content:center;gap:22px;padding:16px 0 12px}
+.act{border-radius:50%;display:grid;place-items:center;border:2px solid var(--line);background:var(--surface);box-shadow:var(--shadow)}
+.act.nope,.act.like{width:64px;height:64px}
+.act.nope{color:var(--nope)}
+.act.like{background:var(--like);border-color:var(--like);color:var(--like-ink)}
+.act.undo{width:46px;height:46px;color:var(--muted)}
+.act:disabled{opacity:.4;cursor:default}
+.act:active:not(:disabled){transform:scale(.94)}
+.count{text-align:center;font-size:12px;color:var(--muted);padding-bottom:4px;font-variant-numeric:tabular-nums}
+
+/* tabs */
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);background:var(--surface);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tab{background:none;border:0;padding:10px 4px 12px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;font-weight:600;color:var(--muted);position:relative}
+.tab[aria-selected="true"]{color:var(--ink)}
+.tab[aria-selected="true"]::before{content:"";position:absolute;top:0;left:30%;right:30%;height:3px;border-radius:0 0 3px 3px;background:var(--like)}
+.tab .badge{position:absolute;top:6px;left:calc(50% + 8px);background:var(--like);color:var(--like-ink);font-size:10px;border-radius:99px;padding:1px 6px;font-variant-numeric:tabular-nums}
+
+/* lists */
+h3.sec{font-family:var(--font-display);font-size:20px;margin:12px 0 4px;letter-spacing:-.01em}
+.sec-note{color:var(--muted);font-size:13px;margin:0 0 12px}
+.list{display:flex;flex-direction:column;gap:10px}
+.item{display:grid;grid-template-columns:64px 1fr;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:10px}
+.swatch{border-radius:12px;background:hsl(var(--h) var(--card-s) var(--card-l));display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;color:hsl(var(--h) 50% var(--big-l));line-height:1}
+.swatch b{font-size:24px}
+.swatch small{font-size:10px;font-weight:700}
+.item-body{min-width:0;display:flex;flex-direction:column;gap:6px}
+.item-body h4{margin:0;font-size:15px;font-family:var(--font-display);font-weight:700}
+.item-body .meta{font-size:12px}
+.row{display:flex;flex-wrap:wrap;gap:6px}
+.btn{border:1px solid var(--line);background:var(--surface-2);border-radius:99px;padding:6px 12px;font-size:13px;font-weight:600}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.like{background:var(--like);border-color:var(--like);color:var(--like-ink)}
+.btn.ghost{background:none}
+.btn.danger{color:var(--like);border-color:var(--like);background:none}
+.done-tag{font-size:12px;font-weight:700;color:var(--ok)}
+.blank{border:2px dashed var(--line);border-radius:18px;padding:20px;color:var(--muted);text-align:center}
+
+/* taste */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 6px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:10px 12px}
+.stat b{display:block;font-family:var(--font-display);font-size:26px;font-variant-numeric:tabular-nums}
+.stat small{color:var(--muted);font-size:12px}
+.bars{display:flex;flex-direction:column;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px}
+.bar{display:grid;grid-template-columns:96px 1fr;align-items:center;gap:10px;font-size:13px}
+.bar .name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar .track{position:relative;height:12px;border-radius:6px;background:var(--surface-2)}
+.bar .track::after{content:"";position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--line)}
+.bar .fill{position:absolute;top:0;bottom:0;border-radius:6px}
+.bar .fill.pos{left:50%;background:var(--like)}
+.bar .fill.neg{right:50%;background:var(--nope)}
+.bar-legend{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);padding-left:106px}
+
+/* sheet */
+.backdrop{position:fixed;inset:0;background:rgba(10,12,30,.45);display:flex;align-items:flex-end;justify-content:center;z-index:20}
+.sheet{background:var(--surface);width:100%;max-width:520px;max-height:88%;overflow-y:auto;border-radius:24px 24px 0 0;padding:8px 16px calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px}
+.grab{width:40px;height:4px;border-radius:2px;background:var(--line);margin:4px auto 0}
+.sheet h2{font-family:var(--font-display);font-size:22px;margin:0}
+.group{display:flex;flex-direction:column;gap:8px}
+.group > .glabel{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{border:1px solid var(--line);background:var(--surface-2);border-radius:99px;padding:8px 13px;font-size:14px;font-weight:500}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink);font-weight:600}
+.hint{font-size:12px;color:var(--muted)}
+.hint a{color:inherit}
+.field{width:100%;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:12px;padding:10px 12px;font:inherit}
+.sheet .go{background:var(--like);color:var(--like-ink);border:0;border-radius:16px;padding:14px;font-weight:700;font-size:16px}
+
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:99px;font-size:13px;font-weight:600;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:30;max-width:calc(100% - 32px)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+.gate{position:fixed;inset:0;z-index:40;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px 16px;text-align:center}
+.gate-box{max-width:340px;display:flex;flex-direction:column;align-items:center;gap:14px;font-size:15px}
+.gate-box .brand{font-size:40px}
+.gate-box p{margin:0;color:var(--muted)}
+.gate-box .err{color:var(--like)}
+.gate-box .btn{padding:12px 20px;font-size:15px}
+.copybox{min-height:150px;margin-top:8px;font-size:12px;resize:vertical}
+@media (prefers-reduced-motion: reduce){*{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+@media (max-height:640px){.card p{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}.actions{padding:10px 0 8px}}
+</style>
+</head>
+<body>
+<div class="gate" id="gate"><div class="gate-box"><div class="brand">Kettes<span>ben</span></div><p>Betöltés…</p></div></div>
+<div class="app">
+  <header class="top">
+    <div class="brand-row">
+      <div class="brand">Kettes<span>ben</span></div>
+      <div class="sync" id="sync">Csak ezen az eszközön</div>
+    </div>
+    <button class="ctx-btn" id="ctxBtn" aria-haspopup="dialog">
+      <span class="txt"><span class="lbl">Most ennyi fér bele</span><span class="sum" id="ctxSum"></span></span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>
+    </button>
+  </header>
+
+  <main>
+    <section class="view" id="view-deck">
+      <div class="novel">
+        <div class="novel-txt"><b>Ma kipróbálnánk valami újat</b><small>Kevésbé ismert terepről hozunk ötletet</small></div>
+        <label class="switch"><input type="checkbox" id="novel" aria-label="Ma kipróbálnánk valami újat"><span class="track"><span class="knob"></span></span></label>
+      </div>
+      <div class="deck" id="deck"></div>
+      <div class="actions">
+        <button class="act nope" id="btnNope" aria-label="Nem tetszik"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+        <button class="act undo" id="btnUndo" aria-label="Visszavonás" disabled><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg></button>
+        <button class="act like" id="btnLike" aria-label="Tetszik"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.2 3 4.5 6.6 4.5c2.1 0 3.5 1.1 5.4 3.1 1.9-2 3.3-3.1 5.4-3.1 3.6 0 5.7 3.7 4.2 7.2C19.5 16.4 12 21 12 21z"/></svg></button>
+      </div>
+      <div class="count" id="count"></div>
+    </section>
+
+    <section class="view scroll" id="view-favs" hidden></section>
+    <section class="view scroll" id="view-taste" hidden></section>
+  </main>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-view="deck" aria-selected="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M9 9h6M9 13h4"/></svg>Ötletek</button>
+    <button class="tab" role="tab" data-view="favs" aria-selected="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20s-7-4.3-8.9-8.6C1.7 8.2 3.6 5 6.8 5c1.9 0 3.2 1 5.2 2.9C14 6 15.3 5 17.2 5c3.2 0 5.1 3.2 3.7 6.4C19 15.7 12 20 12 20z"/></svg>Kedvencek<span class="badge" id="favBadge" hidden></span></button>
+    <button class="tab" role="tab" data-view="taste" aria-selected="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Ízlésünk</button>
+  </nav>
+</div>
+
+<div class="backdrop" id="sheetWrap" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="grab"></div>
+    <h2 id="sheetTitle">Milyen most a helyzet?</h2>
+    <div id="groups"></div>
+    <div class="group">
+      <label class="glabel" for="city">Hol vagytok? (nem kötelező)</label>
+      <input class="field" id="city" placeholder="pl. Budapest XI. vagy Szeged" autocomplete="address-level2">
+      <span class="hint">A kinti programoknál ezzel keresünk helyeket a térképen.</span>
+    </div>
+    <button class="go" id="sheetGo">Mutasd az ötleteket</button>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="otletek.js"></script>
+<script>
+(function(){
+"use strict";
+
+/* ---------- tags ---------- */
+const TAGS={
+  beszelgetes:["beszélgetős",232], romantika:["romantikus",345], kreativ:["kreatív",282], jatek:["játékos",200],
+  mozgas:["mozgás",150], gasztro:["gasztro",24], kultura:["kultúra",258], termeszet:["természet",118],
+  tanulas:["tanulás",190], wellness:["feltöltődés",168], kaland:["kaland",42], nosztalgia:["nosztalgia",302],
+  zene:["zene",322], intim:["testközel",4], relax:["lazulás",212]
+};
+
+const RAW=window.OTLETEK||[];
+const IDEAS=RAW.map(r=>({id:r[0],t:r[1],d:r[2],min:r[3],loc:r[4],io:r[5],tod:r[6],e:r[7],cost:r[8],nov:r[9],tags:r[10],flags:r[11]||"",mq:r[12]||""}));
+const BY=Object.fromEntries(IDEAS.map(i=>[i.id,i]));
+
+/* ---------- context ---------- */
+const GROUPS=[
+ {k:"time",label:"Mennyi időtök van?",opts:[[15,"15 perc"],[30,"30 perc"],[60,"1 óra"],[120,"2 óra"],[240,"Fél nap"],[600,"Egész nap"]]},
+ {k:"loc",label:"Hová tudtok eljutni?",opts:[[0,"Csak itthon"],[1,"Gyalog a környéken"],[2,"Max. fél óra út"],[3,"Egész napos kiruccanás"]]},
+ {k:"io",label:"Bent vagy kint?",opts:[["any","Mindegy"],["in","Bent"],["out","Kint"]]},
+ {k:"tod",label:"Napszak",opts:[["m","Reggel"],["d","Napközben"],["e","Este"],["n","Késő este"]]},
+ {k:"wx",label:"Milyen az idő?",opts:[["sun","Napos, meleg"],["mild","Kellemes"],["cloud","Borús"],["rain","Esik"],["cold","Hideg"]],hint:'Nem tudod? <a href="https://www.idokep.hu" target="_blank" rel="noopener">Nézd meg az Időképen</a>.'},
+ {k:"energy",label:"Mennyi energiátok maradt?",opts:[[1,"Kimerültek vagyunk"],[2,"Rendben"],[3,"Pörgünk"]]}
+];
+const LS="kettesben.v1";
+function lsGet(k,d){try{const v=localStorage.getItem(LS+"."+k);return v?JSON.parse(v):d}catch(e){return d}}
+function lsSet(k,v){try{localStorage.setItem(LS+"."+k,JSON.stringify(v))}catch(e){}}
+const today=new Date().toISOString().slice(0,10);
+function autoTod(){const h=new Date().getHours();return h>=5&&h<10?"m":h<17&&h>=10?"d":h>=17&&h<20?"e":"n"}
+function seasonWx(){const m=new Date().getMonth();return (m>=10||m<=1)?"cold":(m>=5&&m<=7)?"sun":"mild"}
+const savedCtx=lsGet("ctx",{});
+const ctx=Object.assign({time:60,loc:0,io:"any",energy:2,city:"",novel:false},savedCtx);
+ctx.tod=autoTod();
+if(savedCtx.wxDate!==today){ctx.wx=seasonWx();ctx.wxSet=false}
+if(ctx.tod==="n"&&!savedCtx.locDate){ctx.loc=0}
+function saveCtx(){lsSet("ctx",Object.assign({},ctx,{wxDate:ctx.wxSet?today:savedCtx.wxDate,locDate:today}))}
+
+/* ---------- learned profile ---------- */
+function normalize(s){s=s&&typeof s==="object"?s:{};return {tags:s.tags||{},ideas:s.ideas||{},favs:Array.isArray(s.favs)?s.favs.filter(id=>BY[id]):[]}}
+let state=normalize(lsGet("state",null));
+const r2=x=>Math.round(x*100)/100;
+function totalSwipes(){let n=0;for(const k in state.ideas){n+=(state.ideas[k].l||0)+(state.ideas[k].d||0)}return n}
+function learned(i){let s=0;i.tags.forEach(t=>s+=state.tags[t]||0);s/=i.tags.length;const st=state.ideas[i.id];if(st){if(st.done)s+={3:2,2:.8,1:-1.5}[st.done.r]||0;s-=(st.d||0)*.8}return 3*Math.tanh(s/3)}
+
+function fits(i,c){
+  if(i.min>c.time||i.loc>c.loc||i.e>c.energy)return false;
+  if(c.io==="in"&&i.io==="out")return false;
+  if(c.io==="out"&&i.io==="in")return false;
+  if(!i.tod.includes(c.tod))return false;
+  if(c.wx==="rain"&&i.io==="out"&&!i.flags.includes("r"))return false;
+  if(i.flags.includes("w")&&!(c.wx==="sun"||c.wx==="mild"))return false;
+  const st=state.ideas[i.id];
+  if(st&&(st.d||0)>=2&&(st.d||0)>(st.l||0)+1)return false;
+  return true;
+}
+function fitBonus(i,c){
+  let b=-.7*(c.loc-i.loc);
+  b+=Math.min(i.min/c.time,1)*.6;
+  if(c.wx==="sun"&&i.io!=="in")b+=.4;
+  if(c.wx==="cold"&&i.flags.includes("c"))b+=.4;
+  if(c.wx==="rain"&&i.flags.includes("r"))b+=.4;
+  return b;
+}
+function score(i,c){
+  const st=state.ideas[i.id]||{};
+  if(c.novel){
+    let fam=0,unexplored=0;
+    i.tags.forEach(t=>{const w=state.tags[t]||0;fam+=Math.max(0,w);if(Math.abs(w)<.8)unexplored++});
+    fam/=i.tags.length;
+    const seenBefore=(st.l||0)+(st.d||0)>0||st.done;
+    if(learned(i)<-2)return -99;
+    return i.nov*.8-Math.min(fam,4)*.35+unexplored*.6-(seenBefore?1.6:0)+fitBonus(i,c)*.6+Math.random()*1.2;
+  }
+  const noise=1.6*Math.max(.35,1-totalSwipes()/80);
+  return learned(i)+fitBonus(i,c)-(state.favs.includes(i.id)?.4:0)+Math.random()*noise;
+}
+
+/* ---------- mentés: Firebase (Firestore, kettesben/profile), plusz másolat a böngészőben ---------- */
+// Ugyanaz a Firebase-projekt, mint a MomAssistanté; a profil egyetlen dokumentum, amit mindketten élőben látunk.
+const PROFILE="kettesben/profile";
+let DB=null,authInfo={status:"loading"},unwatch=null,dirty=false,saveTimer=null,chain=Promise.resolve();
+const syncEl=document.getElementById("sync"),gateEl=document.getElementById("gate");
+function setSync(t){syncEl.textContent=t}
+function persist(){lsSet("state",state);if(!DB)return;dirty=true;clearTimeout(saveTimer);saveTimer=setTimeout(flush,1200)}
+function flush(){
+  clearTimeout(saveTimer);if(!DB||!dirty)return;
+  const body=JSON.parse(JSON.stringify(state));dirty=false;
+  setSync(navigator.onLine?"Mentés…":"Nincs internet, később feltöltöm");
+  chain=chain.then(()=>DB.set(PROFILE,body)).then(()=>setSync("Közös profil · mentve")).catch(e=>setSync("A mentés nem sikerült"+(e&&e.code?" ("+e.code+")":"")));
+}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")flush()});
+function renderGate(html){gateEl.hidden=!html;if(html)gateEl.innerHTML='<div class="gate-box">'+html+"</div>"}
+gateEl.addEventListener("click",e=>{
+  const b=e.target.closest("button[data-act]");if(!b)return;
+  if(b.dataset.act==="signIn")window.KAuth&&window.KAuth.signIn();
+  else if(b.dataset.act==="signOut")window.KAuth&&window.KAuth.signOut();
+  else if(b.dataset.act==="reload")location.reload();
+});
+// a Firebase-modul hívja (lent), amikor kiderül, be vagy-e lépve
+window.KApp={
+  setAuth(a){
+    authInfo=a;if(unwatch){unwatch();unwatch=null}
+    if(a.status==="signedIn"){
+      DB=a.db;renderGate("Profil betöltése…");let first=true;
+      unwatch=DB.watch(PROFILE,(data,pending)=>{
+        if(pending||dirty)return;
+        if(!data){if(first&&totalSwipes()>0){dirty=true;flush()}else setSync("Közös profil · szinkronban")}
+        else{state=normalize(data);lsSet("state",state);setSync("Közös profil · szinkronban");renderSide();if(pos>=deck.length)rebuild()}
+        if(first){first=false;renderGate(null)}
+      },e=>{
+        DB=null;
+        renderGate(e.code==="permission-denied"
+          ?"Ez a Google-fiók ("+esc(a.email)+") nem fér hozzá a közös profilhoz.<br><button class=\"btn primary\" data-act=\"signOut\">Másik fiókkal</button>"
+          :"Nem sikerült betölteni a profilt ("+esc(e.code||e.message)+").<br><button class=\"btn primary\" data-act=\"reload\">Újra</button>");
+      });
+    }else if(a.status==="unconfigured"){DB=null;setSync("Csak ezen az eszközön");renderGate(null)}
+    else if(a.status==="signedOut"){
+      DB=null;
+      renderGate('<div class="brand">Kettes<span>ben</span></div><p>Lépjetek be a Google-fiókotokkal, hogy a közös ízlésprofil mindkettőtök telefonján ugyanaz legyen.</p><button class="btn primary" data-act="signIn">Belépés Google-fiókkal</button>'+(a.error?'<p class="err">'+esc(a.error)+"</p>":""));
+    }
+    renderTaste();
+  }
+};
+
+/* ---------- deck ---------- */
+const deckEl=document.getElementById("deck"),countEl=document.getElementById("count");
+let deck=[],pos=0,seen=new Set(),history=[],busy=false;
+function rebuild(){
+  deck=IDEAS.filter(i=>!seen.has(i.id)&&fits(i,ctx)).map(i=>({id:i.id,s:score(i,ctx)})).filter(x=>x.s>-50).sort((a,b)=>b.s-a.s).map(x=>x.id);
+  pos=0;renderDeck();
+}
+function fmtMin(m){return m>=60?(m%60?[(m/60).toFixed(1).replace(".",","),"óra"]:[m/60,"óra"]):[m,"perc"]}
+const LOCN=["Itthon","Gyalog","Rövid út","Kiruccanás"],ION={in:"Bent",out:"Kint",both:"Bent és kint"};
+function costHTML(c){return c===0?"Ingyenes":'<span>'+"Ft".repeat(c)+'</span><span class="off">'+"Ft".repeat(3-c)+"</span>"}
+function esc(s){return String(s).replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]))}
+function why(i){
+  if(ctx.novel){const fresh=i.tags.filter(t=>Math.abs(state.tags[t]||0)<.8).map(t=>TAGS[t][0]);return fresh.length?"Új terep: "+fresh.join(", "):"Ritkán választott ötlet"}
+  const st=state.ideas[i.id];
+  if(st&&st.done&&st.done.r===3)return "Egyszer már nagyon bejött";
+  const good=i.tags.filter(t=>(state.tags[t]||0)>=1.5).sort((a,b)=>state.tags[b]-state.tags[a]).map(t=>TAGS[t][0]);
+  if(good.length)return "Mert szeretitek: "+good.join(", ");
+  if(totalSwipes()<10)return "Még ismerkedünk: húzd jobbra vagy balra";
+  return "Pont belefér a mostani időtökbe";
+}
+function cardHTML(i,cls){
+  const [n,u]=fmtMin(i.min),h=TAGS[i.tags[0]][1];
+  const map=i.loc>0&&i.mq?'<a href="https://www.google.com/maps/search/'+encodeURIComponent(i.mq+(ctx.city?" "+ctx.city:""))+'" target="_blank" rel="noopener">Térkép ↗</a>':"";
+  return '<article class="card '+cls+'" style="--h:'+h+'" data-id="'+i.id+'" aria-label="'+esc(i.t)+'">'+
+    '<div class="stamp yes">TETSZIK</div><div class="stamp no">NEM MOST</div>'+
+    '<div class="card-head"><div class="pills">'+(ctx.novel?'<span class="pill new">Új terep</span>':"")+i.tags.slice(0,2).map(t=>'<span class="pill">'+TAGS[t][0]+"</span>").join("")+'</div><div class="cost">'+costHTML(i.cost)+"</div></div>"+
+    '<div class="big">'+n+"<small>"+u+"</small></div>"+
+    "<h2>"+esc(i.t)+"</h2><p>"+esc(i.d)+"</p>"+
+    '<div class="meta"><span>'+LOCN[i.loc]+"</span><span>"+ION[i.io]+"</span><span>"+["","Pihentető","Közepes","Aktív"][i.e]+"</span></div>"+
+    '<div class="why"><span>'+esc(why(i))+"</span>"+map+"</div></article>";
+}
+function renderDeck(){
+  deckEl.classList.toggle("novel-on",!!ctx.novel);
+  const rest=deck.length-pos;
+  if(rest<=0){
+    deckEl.innerHTML='<div class="empty"><h3>Ennyi fért bele</h3><p>Ezekkel a feltételekkel több ötletünk nincs most. Lazíts a szűrőkön, vagy keverd újra a pakli.</p><div class="row"><button class="btn primary" id="reshuffle">Újrakeverés</button><button class="btn" id="openCtx2">Helyzet módosítása</button></div></div>';
+    document.getElementById("reshuffle").onclick=()=>{seen.clear();rebuild()};
+    document.getElementById("openCtx2").onclick=openSheet;
+  }else{
+    let html="";
+    for(let k=Math.min(2,rest-1);k>=0;k--)html+=cardHTML(BY[deck[pos+k]],k===0?"top":"back"+k);
+    deckEl.innerHTML=html;
+    bindDrag(deckEl.querySelector(".card.top"));
+  }
+  countEl.textContent=rest>0?rest+" ötlet illik a mostani helyzetetekhez":"";
+  document.getElementById("btnLike").disabled=document.getElementById("btnNope").disabled=rest<=0;
+  document.getElementById("btnUndo").disabled=!history.length;
+}
+function bindDrag(card){
+  if(!card)return;
+  let sx=0,sy=0,dx=0,dy=0,active=false;
+  const yes=card.querySelector(".stamp.yes"),no=card.querySelector(".stamp.no");
+  card.addEventListener("pointerdown",e=>{if(e.target.closest("a,button")||busy)return;active=true;sx=e.clientX;sy=e.clientY;dx=dy=0;card.setPointerCapture(e.pointerId);card.style.transition="none"});
+  card.addEventListener("pointermove",e=>{if(!active)return;dx=e.clientX-sx;dy=e.clientY-sy;card.style.transform="translate("+dx+"px,"+dy*.25+"px) rotate("+dx/18+"deg)";yes.style.opacity=Math.max(0,Math.min(1,dx/90));no.style.opacity=Math.max(0,Math.min(1,-dx/90))});
+  const end=()=>{if(!active)return;active=false;if(Math.abs(dx)>90){fling(dx>0?1:-1)}else{card.style.transition="";card.style.transform="";yes.style.opacity=no.style.opacity=0}};
+  card.addEventListener("pointerup",end);card.addEventListener("pointercancel",end);
+}
+function fling(dir){
+  const card=deckEl.querySelector(".card.top");if(!card||busy)return;busy=true;
+  const id=card.dataset.id;
+  card.querySelector(dir>0?".stamp.yes":".stamp.no").style.opacity=1;
+  card.style.transition="transform .28s ease-in";
+  card.style.transform="translate("+dir*(window.innerWidth*1.1)+"px,40px) rotate("+dir*24+"deg)";
+  setTimeout(()=>{busy=false;commit(id,dir)},230);
+}
+function commit(id,dir){
+  const i=BY[id],st=state.ideas[id]||(state.ideas[id]={l:0,d:0});
+  const amt=dir>0?(ctx.novel?1.3:1):-.5,delta={};
+  i.tags.forEach(t=>{delta[t]=amt;state.tags[t]=r2((state.tags[t]||0)+amt)});
+  let added=false;
+  if(dir>0){st.l=(st.l||0)+1;if(!state.favs.includes(id)){state.favs.unshift(id);added=true}}else st.d=(st.d||0)+1;
+  history.push({id,dir,delta,added});if(history.length>30)history.shift();
+  seen.add(id);pos++;persist();renderDeck();renderSide();
+  if(dir>0)toast(added?"Elmentve a kedvencek közé":"Már a kedvencek között van");
+}
+function undo(){
+  const h=history.pop();if(!h||busy)return;
+  const st=state.ideas[h.id];
+  for(const t in h.delta)state.tags[t]=r2((state.tags[t]||0)-h.delta[t]);
+  if(h.dir>0){st.l=Math.max(0,(st.l||0)-1);if(h.added)state.favs=state.favs.filter(x=>x!==h.id)}else st.d=Math.max(0,(st.d||0)-1);
+  seen.delete(h.id);
+  if(pos>0&&deck[pos-1]===h.id)pos--;else deck.splice(pos,0,h.id);
+  persist();renderDeck();renderSide();toast("Visszavonva");
+}
+document.getElementById("btnLike").onclick=()=>fling(1);
+document.getElementById("btnNope").onclick=()=>fling(-1);
+document.getElementById("btnUndo").onclick=undo;
+document.addEventListener("keydown",e=>{
+  if(!sheetWrap.hidden||currentView!=="deck"||e.target.closest("input"))return;
+  if(e.key==="ArrowRight")fling(1);else if(e.key==="ArrowLeft")fling(-1);
+});
+const novelEl=document.getElementById("novel");
+novelEl.checked=!!ctx.novel;
+novelEl.onchange=()=>{ctx.novel=novelEl.checked;saveCtx();seen.clear();rebuild();toast(ctx.novel?"Új terep: kevésbé ismert ötletek jönnek":"Vissza a kedvenc irányokhoz")};
+
+/* ---------- context sheet ---------- */
+const sheetWrap=document.getElementById("sheetWrap"),groupsEl=document.getElementById("groups"),cityEl=document.getElementById("city");
+function label(k,v){const g=GROUPS.find(g=>g.k===k);const o=g.opts.find(o=>o[0]===v);return o?o[1]:""}
+function renderSum(){
+  document.getElementById("ctxSum").textContent=[label("time",ctx.time),label("loc",ctx.loc),label("tod",ctx.tod),label("wx",ctx.wx),ctx.io!=="any"?label("io",ctx.io):""].filter(Boolean).join(" · ");
+}
+function renderGroups(){
+  groupsEl.innerHTML=GROUPS.map(g=>'<div class="group" style="margin-bottom:14px"><span class="glabel" id="gl-'+g.k+'">'+g.label+'</span><div class="seg" role="group" aria-labelledby="gl-'+g.k+'">'+
+    g.opts.map(o=>'<button type="button" id="opt-'+g.k+"-"+o[0]+'" data-k="'+g.k+'" data-v="'+o[0]+'" aria-pressed="'+(ctx[g.k]===o[0])+'">'+o[1]+"</button>").join("")+"</div>"+(g.hint?'<span class="hint">'+g.hint+"</span>":"")+"</div>").join("");
+}
+groupsEl.addEventListener("click",e=>{
+  const b=e.target.closest("button[data-k]");if(!b)return;
+  const k=b.dataset.k,g=GROUPS.find(g=>g.k===k),v=g.opts.find(o=>String(o[0])===b.dataset.v)[0];
+  ctx[k]=v;if(k==="wx")ctx.wxSet=true;
+  b.parentElement.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));
+});
+function openSheet(){renderGroups();cityEl.value=ctx.city||"";sheetWrap.hidden=false;setTimeout(()=>groupsEl.querySelector("button[aria-pressed=true]")?.focus(),50)}
+function closeSheet(apply){
+  sheetWrap.hidden=true;
+  if(apply){ctx.city=cityEl.value.trim();saveCtx();renderSum();seen.clear();history=[];rebuild()}
+  document.getElementById("ctxBtn").focus();
+}
+document.getElementById("ctxBtn").onclick=openSheet;
+document.getElementById("sheetGo").onclick=()=>closeSheet(true);
+sheetWrap.addEventListener("click",e=>{if(e.target===sheetWrap)closeSheet(true)});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!sheetWrap.hidden)closeSheet(true)});
+
+/* ---------- favourites + taste ---------- */
+const favsEl=document.getElementById("view-favs"),tasteEl=document.getElementById("view-taste");
+let rating=null,confirmReset=false;
+function itemHTML(i,body){
+  const [n,u]=fmtMin(i.min);
+  const map=i.loc>0&&i.mq?' · <a href="https://www.google.com/maps/search/'+encodeURIComponent(i.mq+(ctx.city?" "+ctx.city:""))+'" target="_blank" rel="noopener">Térkép ↗</a>':"";
+  return '<div class="item" style="--h:'+TAGS[i.tags[0]][1]+'"><div class="swatch"><b>'+n+"</b><small>"+u+'</small></div><div class="item-body"><h4>'+esc(i.t)+'</h4><div class="meta"><span>'+LOCN[i.loc]+"</span><span>"+i.tags.map(t=>TAGS[t][0]).join(", ")+map+"</span></div>"+body+"</div></div>";
+}
+function renderFavs(){
+  const todo=state.favs.filter(id=>!(state.ideas[id]&&state.ideas[id].done));
+  const done=IDEAS.filter(i=>state.ideas[i.id]&&state.ideas[i.id].done).sort((a,b)=>(state.ideas[b.id].done.at||"").localeCompare(state.ideas[a.id].done.at||""));
+  let h='<h3 class="sec">Ezeket szeretnénk kipróbálni</h3><p class="sec-note">Ha megcsináltátok, jelöljétek, és mondjátok meg, milyen volt. Ebből tanul a legtöbbet.</p><div class="list">';
+  h+=todo.length?todo.map(id=>{const i=BY[id];
+    const body=rating===id?'<div class="row"><button class="btn like" data-rate="3" data-id="'+id+'">Szuper volt</button><button class="btn" data-rate="2" data-id="'+id+'">Jó volt</button><button class="btn" data-rate="1" data-id="'+id+'">Nem jött be</button><button class="btn ghost" data-cancel="1">Mégse</button></div>'
+      :'<div class="row"><button class="btn primary" data-did="'+id+'">Megcsináltuk</button><button class="btn ghost" data-rm="'+id+'">Törlés</button></div>';
+    return itemHTML(i,body)}).join(""):'<div class="blank">Még üres. Húzz jobbra egy ötletet, és ide kerül.</div>';
+  h+="</div>";
+  if(done.length){
+    h+='<h3 class="sec">Már kipróbáltuk</h3><div class="list">'+done.map(i=>{const d=state.ideas[i.id].done;
+      return itemHTML(i,'<span class="done-tag">'+{3:"Szuper volt",2:"Jó volt",1:"Nem jött be"}[d.r]+" · "+d.at.replace(/-/g,". ")+".</span>")}).join("")+"</div>";
+  }
+  favsEl.innerHTML=h;
+  const b=document.getElementById("favBadge");b.hidden=!todo.length;b.textContent=todo.length;
+}
+favsEl.addEventListener("click",e=>{
+  const t=e.target.closest("button");if(!t)return;
+  if(t.dataset.did){rating=t.dataset.did;renderFavs()}
+  else if(t.dataset.cancel){rating=null;renderFavs()}
+  else if(t.dataset.rm){state.favs=state.favs.filter(x=>x!==t.dataset.rm);persist();renderFavs();toast("Törölve a kedvencek közül")}
+  else if(t.dataset.rate){
+    const id=t.dataset.id,r=+t.dataset.rate,i=BY[id],st=state.ideas[id]||(state.ideas[id]={l:0,d:0});
+    st.done={r,at:today};const amt={3:1.5,2:.5,1:-1}[r];
+    i.tags.forEach(tg=>state.tags[tg]=r2((state.tags[tg]||0)+amt));
+    rating=null;persist();renderFavs();renderTaste();toast(r===3?"Örülünk! Több ilyet hozunk.":r===2?"Feljegyeztük":"Rendben, ilyet ritkábban hozunk");
+  }
+});
+function renderTaste(){
+  const n=totalSwipes(),doneN=Object.values(state.ideas).filter(s=>s.done).length;
+  const entries=Object.keys(TAGS).map(t=>[t,state.tags[t]||0]).sort((a,b)=>b[1]-a[1]);
+  const max=Math.max(3,...entries.map(e=>Math.abs(e[1])));
+  let h='<h3 class="sec">Amit eddig megtudtunk rólatok</h3><div class="stats"><div class="stat"><b>'+n+'</b><small>húzás</small></div><div class="stat"><b>'+state.favs.length+'</b><small>kedvenc</small></div><div class="stat"><b>'+doneN+'</b><small>kipróbálva</small></div></div>';
+  h+='<p class="sec-note">'+(n<10?"Még kevés húzás van, ezért az ajánlások sokszínűek. Kb. 20–30 húzás után kezdenek igazán rátok szabódni.":"Ezek alapján rangsoroljuk az ötleteket. A „valami új” mód szándékosan a középen lévő, kevésbé ismert irányokból válogat.")+"</p>";
+  h+='<div class="bar-legend"><span>kevésbé</span><span>jobban szeretitek</span></div><div class="bars">'+entries.map(([t,w])=>{
+    const pct=Math.abs(w)/max*50;
+    return '<div class="bar"><span class="name">'+TAGS[t][0]+'</span><span class="track" role="img" aria-label="'+TAGS[t][0]+": "+w.toFixed(1).replace(".",",")+'"><span class="fill '+(w>=0?"pos":"neg")+'" style="width:'+pct+'%"></span></span></div>'}).join("")+"</div>";
+  h+='<h3 class="sec">Új ötletek kérése</h3><p class="sec-note">Másold ki, mit tanult az app rólatok, és illeszd be Claude-nak azzal, hogy bővítse a listát. Az új ötletek a következő feltöltés után jelennek meg.</p><div class="row"><button class="btn primary" id="copyTaste">Ízlésünk másolása</button></div><textarea class="field copybox" id="copyBox" readonly hidden></textarea>';
+  h+='<h3 class="sec">Közös profil</h3><p class="sec-note">'+(DB?"Belépve: <b>"+esc(authInfo.email||"")+"</b>. A profilt mindketten ugyanígy látjátok és tanítjátok.":"A profil most csak ebben a böngészőben van elmentve.")+"</p>"+(DB?'<div class="row" style="margin-bottom:10px"><button class="btn" id="signOut">Kilépés</button></div>':"");
+  h+=confirmReset?'<div class="row"><span class="sec-note" style="margin:0;flex-basis:100%">Biztosan? Minden húzás, kedvenc és értékelés törlődik.</span><button class="btn danger" id="resetYes">Igen, kezdjük elölről</button><button class="btn" id="resetNo">Mégse</button></div>':'<button class="btn danger" id="resetAsk">Profil alaphelyzetbe</button>';
+  tasteEl.innerHTML=h;
+}
+tasteEl.addEventListener("click",e=>{
+  const t=e.target.closest("button");if(!t)return;
+  if(t.id==="copyTaste")copyTaste();
+  else if(t.id==="signOut")window.KAuth&&window.KAuth.signOut();
+  else if(t.id==="resetAsk"){confirmReset=true;renderTaste()}
+  else if(t.id==="resetNo"){confirmReset=false;renderTaste()}
+  else if(t.id==="resetYes"){confirmReset=false;state=normalize(null);history=[];seen.clear();persist();renderSide();rebuild();toast("A profil üres, kezdhetitek újra")}
+});
+function renderSide(){renderFavs();renderTaste()}
+// összefoglaló a chatbe: ebből tud Claude rátok szabott új ötleteket írni az otletek.js-be
+function tasteText(){
+  const L=[],t=x=>BY[x].t;
+  L.push("Kettesben – ízlésprofil ("+today+")");
+  L.push("Húzások: "+totalSwipes()+", ötletek a listában: "+IDEAS.length);
+  L.push("Jellegek (pozitív = szeretjük): "+Object.keys(TAGS).map(k=>[k,state.tags[k]||0]).sort((a,b)=>b[1]-a[1]).map(([k,w])=>k+" "+(w>0?"+":"")+w.toFixed(1)).join(", "));
+  const ids=Object.keys(state.ideas).filter(id=>BY[id]),st=id=>state.ideas[id];
+  const grp=(cap,f)=>{const a=ids.filter(f);if(a.length)L.push(cap+": "+a.map(id=>t(id)+" ["+id+"]").join("; "))};
+  grp("Nagyon bejött",id=>st(id).done&&st(id).done.r===3);
+  grp("Jó volt",id=>st(id).done&&st(id).done.r===2);
+  grp("Nem jött be",id=>st(id).done&&st(id).done.r===1);
+  grp("Tetszett (jobbra húzva)",id=>(st(id).l||0)>0&&!st(id).done);
+  grp("Nem tetszett (balra húzva)",id=>(st(id).d||0)>(st(id).l||0));
+  const seenIds=new Set(ids);
+  L.push("Még nem láttuk: "+IDEAS.filter(i=>!seenIds.has(i.id)).length+" ötlet");
+  return L.join("\n");
+}
+function copyTaste(){
+  const txt=tasteText(),box=document.getElementById("copyBox");
+  const fallback=()=>{box.hidden=false;box.value=txt;box.focus();box.select();toast("Jelöld ki és másold ki a szöveget")};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(()=>toast("Kimásolva, illeszd be Claude-nak"),fallback);else fallback();
+}
+
+/* ---------- tabs, toast ---------- */
+let currentView="deck";
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
+  currentView=b.dataset.view;
+  document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",x===b));
+  ["deck","favs","taste"].forEach(v=>document.getElementById("view-"+v).hidden=v!==currentView);
+  rating=null;confirmReset=false;if(currentView!=="deck")renderSide();
+});
+let toastT;const toastEl=document.getElementById("toast");
+function toast(msg){toastEl.textContent=msg;toastEl.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>toastEl.classList.remove("show"),1800)}
+
+renderSum();renderSide();rebuild();
+})();
+</script>
+
+<script src="firebase-config.js"></script>
+<script type="module">
+// Firebase: Google-belépés + Firestore (ugyanaz a projekt, mint a MomAssistanté, külön gyűjteményben: kettesben/profile)
+const V = '10.12.2';
+const cfg = window.FIREBASE_CONFIG;
+if (!cfg || !cfg.apiKey || location.protocol === 'file:') {
+  window.KApp.setAuth({status: 'unconfigured'});
+} else {
+  try {
+    const {initializeApp} = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-app.js`);
+    const A = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-auth.js`);
+    const F = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-firestore.js`);
+    const app = initializeApp(cfg);
+    const auth = A.getAuth(app);
+    const fs = F.initializeFirestore(app, {localCache: F.persistentLocalCache({tabManager: F.persistentMultipleTabManager()})});
+    const db = {
+      // élő figyelés: a másik telefon húzásai is azonnal megjelennek
+      watch: (p, next, err) => F.onSnapshot(F.doc(fs, p), s => next(s.exists() ? s.data() : null, s.metadata.hasPendingWrites), err),
+      set: (p, d) => F.setDoc(F.doc(fs, p), d),
+    };
+    const provider = new A.GoogleAuthProvider();
+    provider.setCustomParameters({prompt: 'select_account'});
+    window.KAuth = {
+      async signIn() {
+        try { await A.signInWithPopup(auth, provider); }
+        catch (e) {
+          if (e.code === 'auth/popup-blocked') return A.signInWithRedirect(auth, provider);
+          if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request')
+            window.KApp.setAuth({status: 'signedOut', error: 'A belépés nem sikerült (' + e.code + ').'});
+        }
+      },
+      signOut: () => A.signOut(auth),
+    };
+    A.onAuthStateChanged(auth, u => window.KApp.setAuth(u ? {status: 'signedIn', email: u.email, db} : {status: 'signedOut'}));
+  } catch (e) {
+    // nincs internet a legelső betöltéskor: helyi mód
+    window.KApp.setAuth({status: 'unconfigured'});
+  }
+}
+</script>
+</body>
+</html>
