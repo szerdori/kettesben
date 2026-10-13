@@ -244,6 +244,9 @@ h3.sec{font-family:var(--font-display);font-size:20px;margin:12px 0 4px;letter-s
 <script>
 (function(){
 "use strict";
+// teszt mód (index.html?teszt): külön böngészőtárhely, rögzített helyzet és véletlen, Firebase nélkül
+const TEST=/[?&]teszt\b/.test(location.search);
+let rnd=TEST?()=>.5:Math.random;
 
 /* ---------- tags ---------- */
 const TAGS={
@@ -266,7 +269,7 @@ const GROUPS=[
  {k:"wx",label:"Milyen az idő?",opts:[["sun","Napos, meleg"],["mild","Kellemes"],["cloud","Borús"],["rain","Esik"],["cold","Hideg"]],hint:'Nem tudod? <a href="https://www.idokep.hu" target="_blank" rel="noopener">Nézd meg az Időképen</a>.'},
  {k:"energy",label:"Mennyi energiátok maradt?",opts:[[1,"Kimerültek vagyunk"],[2,"Rendben"],[3,"Pörgünk"]]}
 ];
-const LS="kettesben.v1";
+const LS=TEST?"kettesben.teszt":"kettesben.v1";
 function lsGet(k,d){try{const v=localStorage.getItem(LS+"."+k);return v?JSON.parse(v):d}catch(e){return d}}
 function lsSet(k,v){try{localStorage.setItem(LS+"."+k,JSON.stringify(v))}catch(e){}}
 const today=new Date().toISOString().slice(0,10);
@@ -277,6 +280,7 @@ const ctx=Object.assign({time:60,loc:0,io:"any",energy:2,city:"",novel:false},sa
 ctx.tod=autoTod();
 if(savedCtx.wxDate!==today){ctx.wx=seasonWx();ctx.wxSet=false}
 if(ctx.tod==="n"&&!savedCtx.locDate){ctx.loc=0}
+if(TEST)Object.assign(ctx,{time:60,loc:0,io:"any",energy:2,tod:"e",wx:"mild",city:"",novel:false});
 function saveCtx(){lsSet("ctx",Object.assign({},ctx,{wxDate:ctx.wxSet?today:savedCtx.wxDate,locDate:today}))}
 
 /* ---------- learned profile ---------- */
@@ -313,10 +317,10 @@ function score(i,c){
     fam/=i.tags.length;
     const seenBefore=(st.l||0)+(st.d||0)>0||st.done;
     if(learned(i)<-2)return -99;
-    return i.nov*.8-Math.min(fam,4)*.35+unexplored*.6-(seenBefore?1.6:0)+fitBonus(i,c)*.6+Math.random()*1.2;
+    return i.nov*.8-Math.min(fam,4)*.35+unexplored*.6-(seenBefore?1.6:0)+fitBonus(i,c)*.6+rnd()*1.2;
   }
   const noise=1.6*Math.max(.35,1-totalSwipes()/80);
-  return learned(i)+fitBonus(i,c)-(state.favs.includes(i.id)?.4:0)+Math.random()*noise;
+  return learned(i)+fitBonus(i,c)-(state.favs.includes(i.id)?.4:0)+rnd()*noise;
 }
 
 /* ---------- mentés: Firebase (Firestore, kettesben/profile), plusz másolat a böngészőben ---------- */
@@ -418,7 +422,7 @@ function bindDrag(card){
   if(!card)return;
   let sx=0,sy=0,dx=0,dy=0,active=false;
   const yes=card.querySelector(".stamp.yes"),no=card.querySelector(".stamp.no");
-  card.addEventListener("pointerdown",e=>{if(e.target.closest("a,button")||busy)return;active=true;sx=e.clientX;sy=e.clientY;dx=dy=0;card.setPointerCapture(e.pointerId);card.style.transition="none"});
+  card.addEventListener("pointerdown",e=>{if(e.target.closest("a,button")||busy)return;active=true;sx=e.clientX;sy=e.clientY;dx=dy=0;try{card.setPointerCapture(e.pointerId)}catch(_){}card.style.transition="none"});
   card.addEventListener("pointermove",e=>{if(!active)return;dx=e.clientX-sx;dy=e.clientY-sy;card.style.transform="translate("+dx+"px,"+dy*.25+"px) rotate("+dx/18+"deg)";yes.style.opacity=Math.max(0,Math.min(1,dx/90));no.style.opacity=Math.max(0,Math.min(1,-dx/90))});
   const end=()=>{if(!active)return;active=false;if(Math.abs(dx)>90){fling(dx>0?1:-1)}else{card.style.transition="";card.style.transform="";yes.style.opacity=no.style.opacity=0}};
   card.addEventListener("pointerup",end);card.addEventListener("pointercancel",end);
@@ -582,6 +586,15 @@ let toastT;const toastEl=document.getElementById("toast");
 function toast(msg){toastEl.textContent=msg;toastEl.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>toastEl.classList.remove("show"),1800)}
 
 renderSum();renderSide();rebuild();
+
+// a tesztek (tesztek/tesztek.js) ezen keresztül látnak bele az app működésébe
+if(TEST)window.KTest={
+  TAGS,IDEAS,BY,GROUPS,fits,score,learned,normalize,tasteText,commit,undo,flush,
+  state:()=>state,ctx:()=>ctx,deck:()=>deck.slice(pos),
+  setRandom(f){rnd=f},
+  setCtx(c){Object.assign(ctx,c);novelEl.checked=!!ctx.novel;renderSum();seen.clear();rebuild()},
+  setState(s){state=normalize(s);persist();renderSide();seen.clear();rebuild()}
+};
 })();
 </script>
 
@@ -590,7 +603,7 @@ renderSum();renderSide();rebuild();
 // Firebase: Google-belépés + Firestore (ugyanaz a projekt, mint a MomAssistanté, külön gyűjteményben: kettesben/profile)
 const V = '10.12.2';
 const cfg = window.FIREBASE_CONFIG;
-if (!cfg || !cfg.apiKey || location.protocol === 'file:') {
+if (!cfg || !cfg.apiKey || location.protocol === 'file:' || /[?&]teszt\b/.test(location.search)) {
   window.KApp.setAuth({status: 'unconfigured'});
 } else {
   try {

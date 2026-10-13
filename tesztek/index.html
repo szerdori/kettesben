@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kettesben tesztek</title>
+<style>
+  body { font: 14px/1.5 ui-monospace, Consolas, monospace; margin: 0; padding: 16px; background: #F6F7FB; color: #1D2040; }
+  h1 { font: 700 20px system-ui, sans-serif; margin: 0 0 8px; }
+  #osszesites { font-weight: 700; margin: 8px 0 12px; }
+  ol { padding-left: 24px; margin: 0; }
+  li { white-space: pre-wrap; }
+  .jo { color: #2E7D55; }
+  .rossz { color: #C2334F; }
+  /* a tesztelt app példányai: nem látszanak, de rendesen kirajzolódnak */
+  #terep { position: fixed; left: -2000px; top: 0; }
+</style>
+</head>
+<body>
+<h1>Kettesben tesztek</h1>
+<div id="osszesites">Fut…</div>
+<ol id="lista"></ol>
+<div id="terep"></div>
+<script src="keret.js"></script>
+<script src="tesztek.js"></script>
+<script>futtat();</script>
+</body>
+</html>
