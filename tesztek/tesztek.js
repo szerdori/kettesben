@@ -399,3 +399,43 @@ teszt("Szinkron: a másik telefon változása élőben megjelenik", async app =>
   await app.ful("favs");
   igaz(app.$("#view-favs").textContent.includes(app.K.BY.spa.t), "a kedvencek listában nem jelent meg");
 });
+
+/* ================= biztonság ================= */
+
+teszt("Biztonság: a felhőből jövő kártékony adat nem fut le, és nem töri el az appot", async app => {
+  const db = hamisDB({
+    tags: {gasztro: 2, "<b>x</b>": 5, kaland: "<img src=x>", toString: 1},
+    ideas: {
+      duel: {l: 1, d: 0, done: {r: 3, at: '<img src=x onerror="parent.__tamadas=1">'}},
+      spa: {l: 1, d: 0, done: {r: 2, at: "2026-10-01"}},
+      candle: "nem objektum", "rossz id!": {l: 1, d: 0}, ujotlet99: {l: 2, d: 0},
+    },
+    favs: ["duel", "spa", "duel", 42, "<script>", "constructor"],
+  });
+  app.belep(db);
+  await varj(20);
+  const s = app.K.state();
+  egyenlo(Object.keys(s.tags).sort(), ["gasztro", "kaland"], "csak ismert jellegek maradnak");
+  egyenlo(s.tags.kaland, 0, "nem szám jellegsúly");
+  egyenlo(s.ideas.duel, {l: 1, d: 0}, "hibás dátumú értékelés eldobva");
+  egyenlo(s.ideas.spa.done, {r: 2, at: "2026-10-01"}, "érvényes értékelés megmarad");
+  igaz(!("candle" in s.ideas) && !("rossz id!" in s.ideas), "hibás bejegyzések eldobva");
+  egyenlo(s.ideas.ujotlet99, {l: 2, d: 0}, "egy újabb ötletlista előzményei megmaradnak");
+  egyenlo(s.favs, ["duel", "spa"], "kedvencek");
+  await app.ful("favs");
+  await app.ful("taste");
+  await varj(50);
+  igaz(!app.$("#view-favs img") && !app.$("#view-taste img"), "kép-elem került az oldalba");
+  igaz(window.__tamadas === undefined && app.w.__tamadas === undefined, "lefutott a beinjektált kód");
+  igaz(app.$("#view-favs .done-tag").textContent.includes("2026. 10. 01."), "a kipróbált ötlet dátuma");
+});
+
+teszt("Biztonság: sérült helyi mentés esetén is elindul az app", async app => {
+  app.w.localStorage.setItem("kettesben.teszt.state", JSON.stringify({tags: [1, 2], ideas: null, favs: "duel"}));
+  await app.ujratolt();
+  egyenlo(app.K.state(), {tags: {}, ideas: {}, favs: []}, "üres profil sérült mentésből");
+  igaz(app.felsoKartya(), "nincs kártya");
+  app.w.localStorage.setItem("kettesben.teszt.state", "{nem json");
+  await app.ujratolt();
+  igaz(app.felsoKartya(), "hibás JSON után nincs kártya");
+});

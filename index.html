@@ -284,7 +284,21 @@ if(TEST)Object.assign(ctx,{time:60,loc:0,io:"any",energy:2,tod:"e",wx:"mild",cit
 function saveCtx(){lsSet("ctx",Object.assign({},ctx,{wxDate:ctx.wxSet?today:savedCtx.wxDate,locDate:today}))}
 
 /* ---------- learned profile ---------- */
-function normalize(s){s=s&&typeof s==="object"?s:{};return {tags:s.tags||{},ideas:s.ideas||{},favs:Array.isArray(s.favs)?s.favs.filter(id=>BY[id]):[]}}
+// a felhőből és a böngészőből jövő profilt csak ellenőrizve fogadjuk el: ismert jellegek, számok, érvényes dátum.
+// Az ismeretlen (pl. egy újabb ötletlistából származó) ötletek előzményei megmaradnak, hogy egy régebbi változat ne törölje őket.
+function normalize(s){
+  s=s&&typeof s==="object"?s:{};
+  const num=x=>typeof x==="number"&&isFinite(x)?x:0,obj=x=>x&&typeof x==="object"&&!Array.isArray(x),tags={},ideas={};
+  const has=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
+  if(obj(s.tags))for(const t in s.tags)if(has(TAGS,t))tags[t]=num(s.tags[t]);
+  if(obj(s.ideas))for(const id in s.ideas){
+    const v=s.ideas[id];if(!/^[a-z0-9]{1,40}$/.test(id)||!obj(v))continue;
+    const o={l:Math.max(0,num(v.l)),d:Math.max(0,num(v.d))};
+    if(obj(v.done)&&[1,2,3].includes(v.done.r)&&typeof v.done.at==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(v.done.at))o.done={r:v.done.r,at:v.done.at};
+    ideas[id]=o;
+  }
+  return {tags,ideas,favs:Array.isArray(s.favs)?s.favs.filter((id,k,a)=>typeof id==="string"&&has(BY,id)&&a.indexOf(id)===k):[]};
+}
 let state=normalize(lsGet("state",null));
 const r2=x=>Math.round(x*100)/100;
 function totalSwipes(){let n=0;for(const k in state.ideas){n+=(state.ideas[k].l||0)+(state.ideas[k].d||0)}return n}
@@ -511,7 +525,7 @@ function renderFavs(){
   h+="</div>";
   if(done.length){
     h+='<h3 class="sec">Már kipróbáltuk</h3><div class="list">'+done.map(i=>{const d=state.ideas[i.id].done;
-      return itemHTML(i,'<span class="done-tag">'+{3:"Szuper volt",2:"Jó volt",1:"Nem jött be"}[d.r]+" · "+d.at.replace(/-/g,". ")+".</span>")}).join("")+"</div>";
+      return itemHTML(i,'<span class="done-tag">'+{3:"Szuper volt",2:"Jó volt",1:"Nem jött be"}[d.r]+" · "+esc(d.at.replace(/-/g,". "))+".</span>")}).join("")+"</div>";
   }
   favsEl.innerHTML=h;
   const b=document.getElementById("favBadge");b.hidden=!todo.length;b.textContent=todo.length;
